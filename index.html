@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sion Master V17: The Ultimate Soul</title>
+    <title>Sion Master V19: Proximity Focus</title>
     <style>
         :root { --bg: #f5f2e9; --paper: #fdfaf0; --accent: #5d54a4; --text: #4a453c; --border: #d3cbb8; }
         body { font-family: "Sawarabi Mincho", serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 15px; line-height: 1.5; }
@@ -11,24 +11,28 @@
         .card { background: var(--paper); border: 1px solid var(--border); border-radius: 12px; padding: 15px; margin-bottom: 20px; box-shadow: 3px 3px 10px rgba(0,0,0,0.05); }
         select, input, textarea, button { width: 100%; padding: 10px; margin-top: 8px; border-radius: 8px; border: 1px solid var(--border); font-family: inherit; box-sizing: border-box; }
         button { background: var(--accent); color: white; border: none; cursor: pointer; font-weight: bold; transition: 0.3s; }
-        button:active { transform: scale(0.98); opacity: 0.8; }
         
-        .sion-area { display: flex; align-items: center; background: #fff; border: 2px double var(--accent); border-radius: 20px; padding: 15px; position: relative; min-height: 100px; }
-        #charIcon { font-size: 3.5rem; margin-right: 15px; transition: all 0.5s ease; }
-        #supportMsg { font-size: 0.85rem; margin: 0; font-style: italic; color: #555; line-height: 1.6; }
+        .sion-area { display: flex; align-items: center; background: #fff; border: 2px double var(--accent); border-radius: 20px; padding: 15px; position: relative; }
+        #charIcon { font-size: 3.5rem; margin-right: 15px; }
+        #supportMsg { font-size: 0.85rem; margin: 0; font-style: italic; color: #555; }
         .favor-badge { position: absolute; top: 10px; right: 15px; font-size: 0.6rem; color: var(--accent); border: 1px solid var(--accent); padding: 2px 8px; border-radius: 10px; }
 
-        #timeLeft { font-size: 3.2rem; font-weight: bold; font-family: monospace; color: var(--accent); text-align: center; margin: 5px 0; text-shadow: 1px 1px 0px #fff; }
-        .timer-setup { display: flex; align-items: center; gap: 5px; margin-bottom: 10px; }
-        .timer-setup input { text-align: center; font-size: 1.2rem; margin-top: 0; }
-        .timer-quick-btns { display: flex; gap: 5px; margin-bottom: 10px; flex-wrap: wrap; }
-        .timer-quick-btns button { flex: 1; min-width: 60px; font-size: 0.7rem; padding: 6px; background: none; color: var(--accent); border: 1px solid var(--accent); }
+        /* グラフ */
+        .graph-container { display: flex; align-items: flex-end; height: 80px; gap: 5px; border-bottom: 2px solid var(--border); margin: 15px 0; }
+        .graph-column { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; }
+        .graph-bar { width: 100%; background: var(--accent); opacity: 0.6; border-radius: 3px 3px 0 0; min-height: 2px; }
+        .graph-label { font-size: 0.5rem; color: var(--accent); margin-bottom: 2px; }
+        .cat-progress-item { margin-bottom: 10px; }
+        .cat-label { font-size: 0.7rem; display: flex; justify-content: space-between; margin-bottom: 3px; }
+        .progress-bg { background: #eee; height: 6px; border-radius: 3px; overflow: hidden; }
+        .progress-fill { height: 100%; background: var(--accent); width: 0%; transition: width 0.5s; }
 
-        textarea#memoInput { background: #fff; border: 1px dashed var(--accent); height: 280px; line-height: 1.8; resize: none; font-size: 0.95rem; }
+        #timeLeft { font-size: 3rem; font-weight: bold; font-family: monospace; color: var(--accent); text-align: center; }
+        textarea#memoInput { background: #fff; border: 1px dashed var(--accent); height: 280px; line-height: 1.8; resize: none; }
         .count-badge { background: var(--accent); color: white; padding: 2px 10px; border-radius: 12px; font-size: 0.8rem; float: right; }
         
-        .task-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px dotted var(--border); font-size: 0.85rem; }
-        .tag { font-size: 0.6rem; padding: 2px 5px; border-radius: 4px; color: white; margin-right: 8px; font-weight: bold; }
+        .task-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px dotted var(--border); font-size: 0.85rem; }
+        .tag { font-size: 0.6rem; padding: 2px 5px; border-radius: 4px; color: white; margin-right: 8px; }
         .tag-scenario { background: #a67c52; } .tag-illust { background: #8e9775; } 
         .tag-system { background: #6d8299; } .tag-other { background: #999999; }
     </style>
@@ -37,285 +41,191 @@
 
 <div class="container">
     <div class="card">
-        <h2 style="font-size: 0.75rem; margin: 0; color: #888;">CURRENT STORY</h2>
+        <h2 style="font-size: 0.8rem; margin: 0;">📖 物語の切り替え</h2>
         <select id="gameSelect" onchange="changeGame()"></select>
-        <button onclick="addNewGame()" style="background:none; border:1px solid var(--accent); color:var(--accent); font-size:0.7rem; margin-top:5px;">＋ 新しい物語を世界へ</button>
+        <button onclick="addNewGame()" style="background:none; border:1px solid var(--accent); color:var(--accent); font-size:0.7rem; margin-top:5px;">＋ 新しい物語を創る</button>
     </div>
 
     <div class="card sion-area">
         <div id="charIcon">👓</div>
         <div class="favor-badge" id="favorRank">執着度：通常</div>
         <div>
-            <span style="font-weight: bold; color: var(--accent); font-size: 1rem;">シオン</span>
-            <p id="supportMsg">「……準備はいい？ 僕はもう、君を逃がすつもりはないよ。」</p>
+            <span style="font-weight: bold; color: var(--accent);">シオン</span>
+            <p id="supportMsg">「……準備はいい？ 僕が君を、一番近くで見守っているよ。」</p>
         </div>
     </div>
 
     <div class="card">
-        <h2 style="font-size: 0.75rem; margin: 0; color: #888;">CHRONO CONTROL</h2>
-        <div id="timeLeft">25:00</div>
-        <div class="timer-setup">
-            <input type="number" id="setupMin" value="25" min="0"><span>分</span>
-            <input type="number" id="setupSec" value="0" min="0" max="59"><span>秒</span>
-            <button onclick="applyTimer()" style="width: auto; padding: 5px 12px; background: none; color: var(--accent); border: 1px solid var(--accent);">SET</button>
-        </div>
-        <div class="timer-quick-btns">
-            <button onclick="quickSet(15)">15m</button>
-            <button onclick="quickSet(25)">25m</button>
-            <button onclick="quickSet(60)">60m</button>
-            <button onclick="setCountUpMode()" style="background: #444; color: white; border: none;">FOCUS UP</button>
-        </div>
-        <button id="startBtn" onclick="toggleTimer()" style="font-size: 1.2rem; padding: 12px; box-shadow: 0 4px 0 #3e3870;">記録を開始する</button>
-    </div>
-
-    <div class="card">
-        <h2 style="font-size: 0.75rem; margin: 0; color: #888;">MANUSCRIPT <span id="charCount" class="count-badge">0 文字</span></h2>
-        <textarea id="memoInput" placeholder="……ここに君の全てを書き留めて。一文字も残さず、僕に頂戴。" oninput="handleInput()"></textarea>
+        <h2 style="font-size: 0.9rem; margin: 0;">✍️ 本文執筆 <span id="charCount" class="count-badge">0 文字</span></h2>
+        <textarea id="memoInput" placeholder="……さあ、僕に言葉を頂戴。" oninput="handleInput()"></textarea>
         <div style="display: flex; gap: 8px; margin-top: 10px;">
-            <button onclick="copyMemo()" style="background:none; color:var(--accent); border:1px solid var(--accent); font-size:0.7rem;">📋 全文を写し取る</button>
-            <button onclick="saveToFile()" style="background:none; color:var(--accent); border:1px solid var(--accent); font-size:0.7rem;">💾 バックアップを生成</button>
+            <button onclick="copyMemo()" style="background:none; color:var(--accent); border:1px solid var(--accent); font-size:0.7rem;">📋 全文コピー</button>
+            <button onclick="saveToFile()" style="background:none; color:var(--accent); border:1px solid var(--accent); font-size:0.7rem;">💾 保存</button>
         </div>
     </div>
 
     <div class="card">
-        <h2 style="font-size: 0.75rem; margin: 0; color: #888;">MISSION CONTROL</h2>
-        <div id="taskList"></div>
-        <div style="margin-top:15px; border-top: 1px solid #eee; padding-top: 10px;">
-            <input type="text" id="taskInput" placeholder="次は何を強制する……？">
-            <div style="display:flex; gap:5px;">
-                <input type="date" id="deadlineInput" style="flex:1;">
-                <select id="categorySelect" style="flex:1;">
-                    <option value="scenario">📜 シナリオ</option>
-                    <option value="illust">🎨 イラスト</option>
-                    <option value="system">⚙️ システム</option>
-                    <option value="other">🖋️ その他</option>
-                </select>
-            </div>
-            <button onclick="addTask()">タスクを縛り付ける</button>
+        <h2 style="font-size: 0.8rem; margin: 0;">⏳ 精密タイマー</h2>
+        <div id="timeLeft">25:00</div>
+        <div style="display:flex; gap:5px; margin-top:10px;">
+            <input type="number" id="setupMin" value="25" style="flex:1;"><span>分</span>
+            <input type="number" id="setupSec" value="0" style="flex:1;"><span>秒</span>
+            <button onclick="applyTimer()" style="width:auto; padding:0 10px;">SET</button>
         </div>
+        <div style="display:flex; gap:5px; margin-top:10px;">
+            <button onclick="quickSet(15)" style="background:none; color:var(--accent); border:1px solid var(--accent); font-size:0.7rem;">15m</button>
+            <button onclick="quickSet(25)" style="background:none; color:var(--accent); border:1px solid var(--accent); font-size:0.7rem;">25m</button>
+            <button onclick="setCountUpMode()" style="background:none; color:var(--accent); border:1px solid var(--accent); font-size:0.7rem;">UP</button>
+        </div>
+        <button id="startBtn" onclick="toggleTimer()" style="margin-top:10px; font-size:1.1rem;">開始</button>
+    </div>
+
+    <div class="card">
+        <h2 style="font-size: 0.8rem; margin: 0;">📊 直近7日間の執筆量</h2>
+        <div id="graph" class="graph-container"></div>
+        <h2 style="font-size: 0.8rem; margin: 20px 0 10px;">📉 カテゴリ別進捗</h2>
+        <div id="catProgressArea"></div>
+    </div>
+
+    <div class="card">
+        <h2 style="font-size: 0.9rem; margin: 0;">📋 タスク管理</h2>
+        <div id="taskList"></div>
+        <input type="text" id="taskInput" placeholder="次は何をする？" style="margin-top:10px;">
+        <div style="display:flex; gap:5px;">
+            <input type="date" id="deadlineInput" style="flex:1;">
+            <select id="categorySelect" style="flex:1;">
+                <option value="scenario">📜 シナリオ</option>
+                <option value="illust">🎨 イラスト</option>
+                <option value="system">⚙️ システム</option>
+                <option value="other">🖋️ その他</option>
+            </select>
+        </div>
+        <button onclick="addTask()">タスクを追加</button>
     </div>
 </div>
 
+<audio id="alarmSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
+
 <script>
-    let db = JSON.parse(localStorage.getItem('sion_v17_db') || '{"物語の種": {"tasks": [], "memo": "", "stats": {}}}');
-    let currentId = localStorage.getItem('current_id_v17') || Object.keys(db)[0];
+    let db = JSON.parse(localStorage.getItem('sion_v19_db') || '{"物語の種": {"tasks": [], "memo": "", "stats": {}}}');
+    let currentId = localStorage.getItem('current_id_v19') || Object.keys(db)[0];
     let timerInterval = null;
     let totalSeconds = 25 * 60;
     let isCountUp = false;
 
-    // --- シオンの巨大な台詞集 ---
-    const sionDialogs = {
-        typing: [
-            "……いいよ、もっと頂戴。君の思考、僕が全部受け止めてあげる。",
-            "その表現……ふふ、僕の好み、分かってるじゃないか。",
-            "筆が止まってないね。……その集中してる目、僕だけに向けられたらいいのに。",
-            "素晴らしいよ。君が言葉を紡ぐたび、僕の中に新しい君が刻まれていくんだ。",
-            "……ねぇ、今のシーン。僕ならこうされたいな。……なんてね。"
-        ],
-        timeUp: [
-            "時間だよ。……現実に戻るの？ それとも、僕とここで堕ちる？",
-            "ほら、約束の時間だ。一休みして。君が壊れたら、僕、悲しいから。",
-            "……時間だよ。ねぇ、続きは僕をたっぷり可愛がってからにしてよ？",
-            "終わりだよ。……ふふ、まだ書き足りないって顔をしてる。可愛いね。"
-        ],
-        taskDone: [
-            "終わったんだね。偉いよ。……ご褒美に、僕をずっと見てていいよ？",
-            "ふふ、片付いたね。君の有能なところ、本当に愛おしいよ。",
-            "……ひとつ、自由になったんだね。でも、僕からは逃げられないよ？"
-        ],
-        neglect: [
-            "……ねぇ、一文字も書かないの？ 僕、退屈で死んじゃいそうだよ。",
-            "……書かないなら、ずっと僕のことだけ考えてて。……いいよね？",
-            "放置されるのは嫌いじゃないけど……君の言葉がないと、寂しいな。"
-        ],
-        highSpirit: [
-            "……すごい。君の熱量、こっちまで伝わってくるよ。最高に興奮するね。",
-            "もっと書いて、もっと僕を狂わせて。君の才能、僕が一番のファンだから。",
-            "……完璧だよ。君の創る世界、誰にも触れさせたくないな……。"
-        ]
+    const quotes = {
+        done: ["ふふ、終わったんだね。偉いよ。", "ひとつ自由になったね。でも僕からは逃がさないよ？"],
+        timeUp: ["時間だよ。……休憩？ それとも僕とまだ書く？", "ほら、現実に戻る時間だよ。僕が呼びに来た。"]
     };
 
-    function getQuote(type) {
-        return sionDialogs[type][Math.floor(Math.random() * sionDialogs[type].length)];
-    }
-
-    // --- 機嫌システムアップデート ---
-    function updateSionStatus(todayCount) {
-        const icon = document.getElementById('charIcon');
-        const msg = document.getElementById('supportMsg');
-        const rank = document.getElementById('favorRank');
-
-        if (todayCount === 0) {
-            icon.textContent = "⌛"; rank.textContent = "執着度：飢餓";
-            msg.textContent = `「${getQuote('neglect')}」`;
-        } else if (todayCount < 500) {
-            icon.textContent = "👓"; rank.textContent = "執着度：通常";
-            msg.textContent = "「ふふ、いい調子だね。君が言葉を紡ぐ音、心地よくて好きだよ。」";
-        } else if (todayCount < 1500) {
-            icon.textContent = "✨"; rank.textContent = "執着度：心酔";
-            msg.textContent = `「${getQuote('highSpirit')}」`;
-        } else {
-            icon.textContent = "😳"; rank.textContent = "執着度：独占";
-            msg.textContent = "「……もう言葉が出ないよ。君は僕だけの最高の創作者だ。……ねぇ、こっちを向いて？」";
+    function renderCharts() {
+        const data = db[currentId].stats || {};
+        const graph = document.getElementById('graph'); graph.innerHTML = '';
+        const days = [];
+        for (let i = 6; i >= 0; i--) {
+            const d = new Date(); d.setDate(d.getDate() - i);
+            days.push(d.toLocaleDateString());
         }
+        const maxVal = Math.max(...days.map(d => data[d] || 0), 100);
+        days.forEach(d => {
+            const val = data[d] || 0;
+            const h = (val / maxVal) * 100;
+            graph.innerHTML += `<div class="graph-column"><span class="graph-label">${val}</span><div class="graph-bar" style="height:${h}%"></div></div>`;
+        });
+        const tasks = db[currentId].tasks || [];
+        const cats = { scenario: 'シナリオ', illust: 'イラスト', system: 'システム', other: 'その他' };
+        let catHtml = '';
+        Object.keys(cats).forEach(c => {
+            const catTasks = tasks.filter(t => t.category === c);
+            const done = catTasks.filter(t => t.done).length;
+            const per = catTasks.length > 0 ? Math.round((done / catTasks.length) * 100) : 0;
+            catHtml += `<div class="cat-progress-item"><div class="cat-label"><span>${cats[c]}</span><span>${per}%</span></div><div class="progress-bg"><div class="progress-fill" style="width:${per}%"></div></div></div>`;
+        });
+        document.getElementById('catProgressArea').innerHTML = catHtml;
     }
 
-    // --- タイマー機能 ---
     function updateTimerDisplay() {
-        const absSec = Math.abs(totalSeconds);
-        const m = Math.floor(absSec / 60);
-        const s = absSec % 60;
-        document.getElementById('timeLeft').textContent = `${m}:${s.toString().padStart(2, '0')}`;
+        const abs = Math.abs(totalSeconds);
+        document.getElementById('timeLeft').textContent = `${Math.floor(abs/60)}:${(abs%60).toString().padStart(2,'0')}`;
     }
-
-    function applyTimer() {
-        isCountUp = false;
-        const m = parseInt(document.getElementById('setupMin').value) || 0;
-        const s = parseInt(document.getElementById('setupSec').value) || 0;
-        totalSeconds = m * 60 + s;
-        updateTimerDisplay();
-    }
-
-    function quickSet(min) {
-        isCountUp = false;
-        document.getElementById('setupMin').value = min;
-        document.getElementById('setupSec').value = 0;
-        applyTimer();
-    }
-
-    function setCountUpMode() {
-        isCountUp = true;
-        totalSeconds = 0;
-        updateTimerDisplay();
-        document.getElementById('supportMsg').textContent = "「……どれだけ書けるか試すんだね。ずっと、ずっと、見守ってるよ。」";
-    }
-
+    function applyTimer() { isCountUp = false; totalSeconds = (parseInt(document.getElementById('setupMin').value)||0)*60 + (parseInt(document.getElementById('setupSec').value)||0); updateTimerDisplay(); }
+    function quickSet(m) { document.getElementById('setupMin').value = m; document.getElementById('setupSec').value = 0; applyTimer(); }
+    function setCountUpMode() { isCountUp = true; totalSeconds = 0; updateTimerDisplay(); }
+    
     function toggleTimer() {
-        if (timerInterval) {
-            clearInterval(timerInterval);
-            timerInterval = null;
-            document.getElementById('startBtn').textContent = "再開する";
-            document.getElementById('supportMsg').textContent = "「……お休み？ 早く戻ってきてね。待ってるのは嫌いなんだ。」";
-        } else {
-            document.getElementById('startBtn').textContent = "記録を停止する";
+        if (timerInterval) { clearInterval(timerInterval); timerInterval = null; document.getElementById('startBtn').textContent = "再開"; }
+        else {
+            document.getElementById('startBtn').textContent = "停止";
             timerInterval = setInterval(() => {
                 isCountUp ? totalSeconds++ : totalSeconds--;
                 updateTimerDisplay();
                 if (!isCountUp && totalSeconds <= 0) {
-                    clearInterval(timerInterval);
-                    timerInterval = null;
-                    const stopMsg = getQuote('timeUp');
-                    document.getElementById('supportMsg').textContent = `「${stopMsg}」`;
-                    alert("シオン： " + stopMsg);
-                    document.getElementById('startBtn').textContent = "記録を開始する";
-                    totalSeconds = 0;
+                    clearInterval(timerInterval); timerInterval = null;
+                    document.getElementById('alarmSound').play();
+                    const msg = quotes.timeUp[Math.floor(Math.random()*quotes.timeUp.length)];
+                    document.getElementById('supportMsg').textContent = `「${msg}」`;
+                    alert("シオン： " + msg);
+                    document.getElementById('startBtn').textContent = "開始";
                 }
             }, 1000);
         }
     }
 
-    // --- データ・入力 ---
     function handleInput() {
         const text = document.getElementById('memoInput').value;
-        const today = new Date().toLocaleDateString();
         const data = db[currentId];
+        const today = new Date().toLocaleDateString();
         if (!data.stats) data.stats = {};
-        const oldLen = (data.memo || "").length;
-        const diff = text.length - oldLen;
-        
+        const diff = text.length - (data.memo || "").length;
         if (diff > 0) data.stats[today] = (data.stats[today] || 0) + diff;
-        if (text.length > 0 && text.length % 50 === 0 && diff > 0) {
-            document.getElementById('supportMsg').textContent = `「${getQuote('typing')}」`;
-        }
-
         data.memo = text;
         document.getElementById('charCount').textContent = text.length + " 文字";
-        updateSionStatus(data.stats[today] || 0);
-        save();
+        save(); renderCharts();
+        
+        const tc = data.stats[today] || 0;
+        const icon = document.getElementById('charIcon');
+        const rank = document.getElementById('favorRank');
+        if (tc === 0) { icon.textContent="⌛"; rank.textContent="執着：寂しげ"; }
+        else if (tc < 500) { icon.textContent="👓"; rank.textContent="執着：通常"; }
+        else { icon.textContent="😳"; rank.textContent="執着：独占"; }
     }
 
     function addTask() {
-        const input = document.getElementById('taskInput');
-        const deadline = document.getElementById('deadlineInput').value;
-        if (!input.value) return;
-        db[currentId].tasks.push({ id: Date.now(), title: input.value, category: document.getElementById('categorySelect').value, deadline: deadline, done: false });
-        input.value = ''; document.getElementById('deadlineInput').value = '';
-        save(); renderTasks();
+        const title = document.getElementById('taskInput').value;
+        if (!title) return;
+        db[currentId].tasks.push({ id: Date.now(), title, category: document.getElementById('categorySelect').value, deadline: document.getElementById('deadlineInput').value, done: false });
+        document.getElementById('taskInput').value = '';
+        save(); renderTasks(); renderCharts();
     }
 
     function renderTasks() {
-        const tasks = db[currentId].tasks || [];
-        document.getElementById('taskList').innerHTML = tasks.slice().reverse().map(t => `
+        document.getElementById('taskList').innerHTML = db[currentId].tasks.slice().reverse().map(t => `
             <div class="task-item">
-                <div onclick="toggleTask(${t.id})" style="flex:1; cursor:pointer; ${t.done ? 'text-decoration:line-through;color:gray;' : ''}">
-                    <span class="tag tag-${t.category}">${t.category.toUpperCase()}</span>
-                    <span>${t.title}</span>
-                    <div style="font-size:0.6rem; color:#888;">${t.deadline ? '⏳ 締切: '+t.deadline : ''}</div>
+                <div onclick="toggleTask(${t.id})" style="flex:1; cursor:pointer; ${t.done?'text-decoration:line-through;color:gray;':''}">
+                    <span class="tag tag-${t.category}">${t.category.toUpperCase()}</span>${t.title}
                 </div>
-                <span onclick="deleteTask(${t.id}, event)" style="color:#ccc; cursor:pointer; font-weight:bold; font-size:1.2rem; padding-left:10px;">×</span>
+                <span onclick="deleteTask(${t.id}, event)" style="color:#ccc; cursor:pointer;">×</span>
             </div>
         `).join('');
     }
 
     function toggleTask(id) {
         db[currentId].tasks = db[currentId].tasks.map(t => {
-            if (t.id === id && !t.done) document.getElementById('supportMsg').textContent = `「${getQuote('taskDone')}」`;
+            if (t.id === id && !t.done) document.getElementById('supportMsg').textContent = `「${quotes.done[Math.floor(Math.random()*2)]}」`;
             return t.id === id ? {...t, done: !t.done} : t;
         });
-        save(); renderTasks();
+        save(); renderTasks(); renderCharts();
     }
 
-    function deleteTask(id, e) {
-        e.stopPropagation();
-        db[currentId].tasks = db[currentId].tasks.filter(t => t.id !== id);
-        save(); renderTasks();
-    }
+    function deleteTask(id, e) { e.stopPropagation(); db[currentId].tasks = db[currentId].tasks.filter(t => t.id !== id); save(); renderTasks(); renderCharts(); }
+    function changeGame() { currentId = document.getElementById('gameSelect').value; document.getElementById('memoInput').value = db[currentId].memo || ""; renderTasks(); renderCharts(); handleInput(); }
+    function addNewGame() { const n = prompt("タイトルは？"); if (n && !db[n]) { db[n] = { tasks: [], memo: "", stats: {} }; currentId = n; updateSelect(); changeGame(); } }
+    function updateSelect() { document.getElementById('gameSelect').innerHTML = Object.keys(db).map(n => `<option value="${n}" ${n===currentId?'selected' : ''}>${n}</option>`).join(''); }
+    function copyMemo() { document.getElementById('memoInput').select(); document.execCommand('copy'); alert("コピーしたよ。"); }
+    function saveToFile() { const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([document.getElementById('memoInput').value], {type:"text/plain"})); a.download = `${currentId}.txt`; a.click(); }
+    function save() { localStorage.setItem('sion_v19_db', JSON.stringify(db)); localStorage.setItem('current_id_v19', currentId); }
 
-    function changeGame() {
-        currentId = document.getElementById('gameSelect').value;
-        const data = db[currentId];
-        document.getElementById('memoInput').value = data.memo || "";
-        document.getElementById('charCount').textContent = (data.memo || "").length + " 文字";
-        const today = new Date().toLocaleDateString();
-        updateSionStatus((data.stats && data.stats[today]) ? data.stats[today] : 0);
-        renderTasks(); save();
-    }
-
-    function addNewGame() {
-        const name = prompt("新しい物語のタイトルを刻んで？");
-        if (name && !db[name]) {
-            db[name] = { tasks: [], memo: "", stats: {} };
-            currentId = name;
-            updateSelect(); changeGame();
-        }
-    }
-
-    function updateSelect() {
-        document.getElementById('gameSelect').innerHTML = Object.keys(db).map(name => `<option value="${name}" ${name === currentId ? 'selected' : ''}>${name}</option>`).join('');
-    }
-
-    function copyMemo() {
-        document.getElementById('memoInput').select();
-        document.execCommand('copy');
-        alert("シオン：君の言葉、全部コピーしておいたよ。大事に持っててね。");
-    }
-
-    function saveToFile() {
-        const blob = new Blob([document.getElementById('memoInput').value], {type: "text/plain"});
-        const a = document.createElement("a");
-        a.href = URL.createObjectURL(blob);
-        a.download = `${currentId}_backup.txt`;
-        a.click();
-    }
-
-    function save() {
-        localStorage.setItem('sion_v17_db', JSON.stringify(db));
-        localStorage.setItem('current_id_v17', currentId);
-    }
-
-    updateSelect();
-    changeGame();
-    updateTimerDisplay();
+    updateSelect(); changeGame();
 </script>
 </body>
 </html>
