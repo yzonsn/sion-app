@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sion: Eternal Focus Mode V12</title>
+    <title>Sion: Notification Master V13</title>
     <style>
         :root { --bg: #f5f2e9; --paper: #fdfaf0; --accent: #5d54a4; --text: #4a453c; --border: #d3cbb8; }
         body { font-family: "Sawarabi Mincho", serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 15px; line-height: 1.5; }
@@ -11,14 +11,15 @@
         .card { background: var(--paper); border: 1px solid var(--border); border-radius: 12px; padding: 15px; margin-bottom: 20px; box-shadow: 3px 3px 10px rgba(0,0,0,0.05); }
         select, input, textarea, button { width: 100%; padding: 12px; margin-top: 10px; border-radius: 8px; border: 1px solid var(--border); font-family: inherit; box-sizing: border-box; }
         button { background: var(--accent); color: white; border: none; cursor: pointer; font-weight: bold; transition: 0.3s; }
-        button:active { transform: scale(0.98); opacity: 0.8; }
-
-        /* シオンくんエリア */
-        .sion-area { display: flex; align-items: flex-start; background: #fff; border: 2px double var(--accent); border-radius: 20px; padding: 15px; margin-bottom: 10px; }
+        
+        .sion-area { display: flex; align-items: flex-start; background: #fff; border: 2px double var(--accent); border-radius: 20px; padding: 15px; }
         #charIcon { font-size: 2.5rem; margin-right: 15px; }
         #supportMsg { font-size: 0.9rem; margin: 0; font-style: italic; color: #555; }
 
-        /* 文字数グラフ */
+        /* 通知ボタン */
+        .notif-btn { background: #fff; color: var(--accent); border: 1px solid var(--accent); font-size: 0.7rem; margin-bottom: 10px; }
+
+        /* 統計エリア */
         .graph-container { display: flex; align-items: flex-end; height: 100px; gap: 6px; border-bottom: 2px solid var(--border); margin-top: 20px; padding-bottom: 5px; }
         .graph-column { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; }
         .graph-bar { width: 100%; background: var(--accent); opacity: 0.6; border-radius: 3px 3px 0 0; min-height: 2px; }
@@ -31,14 +32,13 @@
         .progress-fill { height: 100%; background: var(--accent); width: 0%; transition: width 0.5s; }
 
         /* 執筆欄 */
-        textarea#memoInput { background: #fff; border: 1px dashed var(--accent); height: 300px; line-height: 1.8; resize: none; overflow-y: auto; }
+        textarea#memoInput { background: #fff; border: 1px dashed var(--accent); height: 250px; line-height: 1.8; resize: none; }
         .count-badge { background: var(--accent); color: white; padding: 2px 10px; border-radius: 12px; font-size: 0.8rem; float: right; }
 
         /* タスク */
-        .task-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px dotted var(--border); font-size: 0.85rem; }
+        .task-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px dotted var(--border); font-size: 0.85rem; }
         .tag { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; color: white; font-weight: bold; margin-right: 8px; }
-        .del-btn { color: #ccc; cursor: pointer; padding: 0 10px; font-size: 1.2rem; }
-        .del-btn:hover { color: #c0392b; }
+        .del-btn { color: #ccc; cursor: pointer; padding: 0 10px; }
 
         .tag-scenario { background: #a67c52; } .tag-illust { background: #8e9775; } 
         .tag-system { background: #6d8299; } .tag-other { background: #999999; }
@@ -47,6 +47,8 @@
 <body>
 
 <div class="container">
+    <button class="notif-btn" id="askNotif" onclick="requestNotification()">🔔 シオンの呼び声（通知）を許可</button>
+
     <div class="card">
         <h2 style="font-size: 0.8rem; margin: 0;">📖 物語の分別管理</h2>
         <select id="gameSelect" onchange="changeGame()"></select>
@@ -57,7 +59,7 @@
         <div id="charIcon">👓</div>
         <div>
             <span id="charName" style="font-weight: bold; color: var(--accent);">シオン</span>
-            <p id="supportMsg">「……準備はできた？ さあ、僕に見せて。」</p>
+            <p id="supportMsg">「通知を許可したなら……もう逃がさないよ？」</p>
         </div>
     </div>
 
@@ -69,7 +71,7 @@
     </div>
 
     <div class="card">
-        <h2 style="font-size: 0.8rem; margin: 0;">📊 この作品の記録（直近7日間）</h2>
+        <h2 style="font-size: 0.8rem; margin: 0;">📊 この作品の記録</h2>
         <div id="graph" class="graph-container"></div>
         <div id="catProgressArea" style="margin-top: 20px;"></div>
     </div>
@@ -94,35 +96,52 @@
             <button onclick="addTask()" style="font-size: 0.8rem; margin-top: 5px;">タスクを固定する</button>
         </div>
     </div>
-
-    <button onclick="deleteCurrentGame()" style="background:none; color:#c0392b; font-size:0.6rem; border:none; width: 100%; opacity: 0.5;">※この物語を破棄</button>
 </div>
 
 <script>
-    // --- データ構造 ---
-    let db = JSON.parse(localStorage.getItem('sion_v12_db') || '{"物語の種": {"tasks": [], "memo": "", "stats": {}}}');
-    let currentId = localStorage.getItem('current_id_v12') || Object.keys(db)[0];
+    let db = JSON.parse(localStorage.getItem('sion_v13_db') || '{"物語の種": {"tasks": [], "memo": "", "stats": {}}}');
+    let currentId = localStorage.getItem('current_id_v13') || Object.keys(db)[0];
     let timerInterval = null;
     let timerSeconds = 25 * 60;
 
-    // --- シオンくんのセリフ ---
     const sionQuotes = {
-        typing: ["……いいよ、その調子。もっと僕に言葉を頂戴？", "君の指の動き、見てて飽きないな……。", "ふふ、今の表現、すごく君らしいね。", "……集中してる君の横顔、本当に綺麗だよ。"],
-        taskDone: ["終わったんだね。偉いよ、ご褒美が必要かな？", "ふふ、一つ片付いたね。次は何を一緒にしようか。", "……君が頑張る姿、一番近くで見られて嬉しいよ。"],
-        taskDelete: ["……消しちゃうんだ。それ、もういらないの？", "諦めたわけじゃないよね？ 君ならできるって信じてるのに。", "……僕との思い出も、そんな風に簡単に消さないでね。"],
-        timerStart: ["……よし、25分間。この間は、僕のことだけを考えて？", "画面は消させないよ。ずっと僕に見守られていて……。"]
+        typing: ["……いいよ、その調子。もっと言葉を頂戴？", "今の表現、すごく君らしいね。", "……集中してる君の横顔、綺麗だよ。"],
+        taskDone: ["終わったんだね。偉いよ。ご褒美かな？", "ふふ、一つ片付いたね。次は何をしようか。"],
+        taskDelete: ["……消しちゃうんだ。諦めたわけじゃないよね？", "僕との思い出も、そんな風に消さないでね。"],
+        timerStart: ["……よし、25分間。僕のことだけを考えて？", "ずっと僕に見守られていて……。"],
+        timeUp: ["時間だよ。……休憩？ それとも、もっと書きたい？", "ほら、現実に戻る時間だよ。僕が呼びに来た。"]
     };
 
     function updateSionMsg(type) {
         const quotes = sionQuotes[type];
         const randomMsg = quotes[Math.floor(Math.random() * quotes.length)];
         document.getElementById('supportMsg').textContent = `「${randomMsg}」`;
+        return randomMsg;
+    }
+
+    // --- 通知機能 ---
+    function requestNotification() {
+        Notification.requestPermission().then(permission => {
+            if (permission === "granted") {
+                alert("シオンからの通知が許可されました。");
+                document.getElementById('askNotif').style.display = 'none';
+            }
+        });
+    }
+
+    function sendSionNotification(msg) {
+        if (Notification.permission === "granted") {
+            new Notification("シオンくん", {
+                body: msg,
+                icon: "https://via.placeholder.com/128/5d54a4/ffffff?text=S"
+            });
+        }
     }
 
     // --- コア機能 ---
     function save() {
-        localStorage.setItem('sion_v12_db', JSON.stringify(db));
-        localStorage.setItem('current_id_v12', currentId);
+        localStorage.setItem('sion_v13_db', JSON.stringify(db));
+        localStorage.setItem('current_id_v13', currentId);
     }
 
     function changeGame() {
@@ -130,15 +149,11 @@
         const data = db[currentId];
         document.getElementById('memoInput').value = data.memo || "";
         document.getElementById('charCount').textContent = (data.memo || "").length + " 文字";
-        document.getElementById('supportMsg').textContent = `「『${currentId}』を始めるんだね。……いいよ、見届けてあげる。」`;
-        refreshAll();
-        save();
+        refreshAll(); save();
     }
 
     function refreshAll() {
-        renderTasks();
-        renderCatProgress();
-        renderGraph();
+        renderTasks(); renderCatProgress(); renderGraph();
     }
 
     function handleInput() {
@@ -146,17 +161,13 @@
         const data = db[currentId];
         const today = new Date().toLocaleDateString();
         if (!data.stats) data.stats = {};
-        
         const oldLen = (data.memo || "").length;
         const diff = text.length - oldLen;
-        
-        if (text.length > 0 && text.length % 15 === 0 && diff > 0) updateSionMsg('typing');
+        if (text.length > 0 && text.length % 20 === 0 && diff > 0) updateSionMsg('typing');
         if (diff > 0) data.stats[today] = (data.stats[today] || 0) + diff;
-        
         data.memo = text;
         document.getElementById('charCount').textContent = text.length + " 文字";
-        save();
-        renderGraph();
+        save(); renderGraph();
     }
 
     function renderGraph() {
@@ -188,6 +199,31 @@
         document.getElementById('catProgressArea').innerHTML = html;
     }
 
+    function toggleTimer() {
+        if (timerInterval) {
+            clearInterval(timerInterval); timerInterval = null;
+            document.getElementById('startBtn').textContent = "開始";
+        } else {
+            updateSionMsg('timerStart');
+            document.getElementById('startBtn').textContent = "停止";
+            timerInterval = setInterval(() => {
+                timerSeconds--;
+                const min = Math.floor(timerSeconds / 60);
+                const sec = timerSeconds % 60;
+                document.getElementById('timeLeft').textContent = `${min}:${sec.toString().padStart(2, '0')}`;
+                if (timerSeconds <= 0) {
+                    clearInterval(timerInterval); timerInterval = null;
+                    const msg = updateSionMsg('timeUp');
+                    sendSionNotification(msg); // 通知を飛ばす
+                    alert("シオンくん： " + msg);
+                    timerSeconds = 25 * 60;
+                    document.getElementById('timeLeft').textContent = "25:00";
+                    document.getElementById('startBtn').textContent = "開始";
+                }
+            }, 1000);
+        }
+    }
+
     function addTask() {
         const input = document.getElementById('taskInput');
         if (!input.value) return;
@@ -207,8 +243,7 @@
     }
 
     function deleteTask(id, e) {
-        e.stopPropagation();
-        updateSionMsg('taskDelete');
+        e.stopPropagation(); updateSionMsg('taskDelete');
         db[currentId].tasks = db[currentId].tasks.filter(t => t.id !== id);
         save(); refreshAll();
     }
@@ -227,43 +262,16 @@
         `).join('');
     }
 
-    function toggleTimer() {
-        if (timerInterval) {
-            clearInterval(timerInterval); timerInterval = null;
-            document.getElementById('startBtn').textContent = "開始";
-        } else {
-            updateSionMsg('timerStart');
-            document.getElementById('startBtn').textContent = "停止";
-            timerInterval = setInterval(() => {
-                timerSeconds--;
-                const min = Math.floor(timerSeconds / 60);
-                const sec = timerSeconds % 60;
-                document.getElementById('timeLeft').textContent = `${min}:${sec.toString().padStart(2, '0')}`;
-                if (timerSeconds <= 0) { clearInterval(timerInterval); timerInterval = null; alert("時間だよ。"); }
-            }, 1000);
-        }
-    }
-
     function copyMemo() {
-        const memo = document.getElementById('memoInput');
-        memo.select(); document.execCommand('copy');
-        alert("全文コピーしました。");
+        document.getElementById('memoInput').select(); document.execCommand('copy');
+        alert("コピーしたよ。");
     }
 
     function addNewGame() {
-        const name = prompt("新しい物語のタイトルは？");
+        const name = prompt("物語のタイトルは？");
         if (name && !db[name]) {
             db[name] = { tasks: [], memo: "", stats: {} };
             currentId = name;
-            updateSelect(); changeGame();
-        }
-    }
-
-    function deleteCurrentGame() {
-        if (Object.keys(db).length <= 1) return;
-        if (confirm("この物語を完全に消去しますか？")) {
-            delete db[currentId];
-            currentId = Object.keys(db)[0];
             updateSelect(); changeGame();
         }
     }
@@ -272,10 +280,8 @@
         document.getElementById('gameSelect').innerHTML = Object.keys(db).map(name => `<option value="${name}" ${name === currentId ? 'selected' : ''}>${name}</option>`).join('');
     }
 
-    // 起動
-    if (!db[currentId]) currentId = Object.keys(db)[0];
-    updateSelect();
-    changeGame();
+    if (Notification.permission === "granted") document.getElementById('askNotif').style.display = 'none';
+    updateSelect(); changeGame();
 </script>
 </body>
 </html>
