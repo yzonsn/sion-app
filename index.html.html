@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sion: Eternal Focus Mode V12</title>
+    <style>
+        :root { --bg: #f5f2e9; --paper: #fdfaf0; --accent: #5d54a4; --text: #4a453c; --border: #d3cbb8; }
+        body { font-family: "Sawarabi Mincho", serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 15px; line-height: 1.5; }
+        .container { max-width: 600px; margin: 0 auto; }
+        .card { background: var(--paper); border: 1px solid var(--border); border-radius: 12px; padding: 15px; margin-bottom: 20px; box-shadow: 3px 3px 10px rgba(0,0,0,0.05); }
+        select, input, textarea, button { width: 100%; padding: 12px; margin-top: 10px; border-radius: 8px; border: 1px solid var(--border); font-family: inherit; box-sizing: border-box; }
+        button { background: var(--accent); color: white; border: none; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        button:active { transform: scale(0.98); opacity: 0.8; }
+
+        /* シオンくんエリア */
+        .sion-area { display: flex; align-items: flex-start; background: #fff; border: 2px double var(--accent); border-radius: 20px; padding: 15px; margin-bottom: 10px; }
+        #charIcon { font-size: 2.5rem; margin-right: 15px; }
+        #supportMsg { font-size: 0.9rem; margin: 0; font-style: italic; color: #555; }
+
+        /* 文字数グラフ */
+        .graph-container { display: flex; align-items: flex-end; height: 100px; gap: 6px; border-bottom: 2px solid var(--border); margin-top: 20px; padding-bottom: 5px; }
+        .graph-column { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; }
+        .graph-bar { width: 100%; background: var(--accent); opacity: 0.6; border-radius: 3px 3px 0 0; min-height: 2px; }
+        .graph-label { font-size: 0.6rem; color: var(--accent); margin-bottom: 2px; font-weight: bold; }
+
+        /* カテゴリ進捗 */
+        .cat-progress-item { margin-bottom: 8px; }
+        .cat-label { font-size: 0.7rem; display: flex; justify-content: space-between; margin-bottom: 2px; }
+        .progress-bg { background: #eee; height: 8px; border-radius: 4px; overflow: hidden; }
+        .progress-fill { height: 100%; background: var(--accent); width: 0%; transition: width 0.5s; }
+
+        /* 執筆欄 */
+        textarea#memoInput { background: #fff; border: 1px dashed var(--accent); height: 300px; line-height: 1.8; resize: none; overflow-y: auto; }
+        .count-badge { background: var(--accent); color: white; padding: 2px 10px; border-radius: 12px; font-size: 0.8rem; float: right; }
+
+        /* タスク */
+        .task-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px dotted var(--border); font-size: 0.85rem; }
+        .tag { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; color: white; font-weight: bold; margin-right: 8px; }
+        .del-btn { color: #ccc; cursor: pointer; padding: 0 10px; font-size: 1.2rem; }
+        .del-btn:hover { color: #c0392b; }
+
+        .tag-scenario { background: #a67c52; } .tag-illust { background: #8e9775; } 
+        .tag-system { background: #6d8299; } .tag-other { background: #999999; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="card">
+        <h2 style="font-size: 0.8rem; margin: 0;">📖 物語の分別管理</h2>
+        <select id="gameSelect" onchange="changeGame()"></select>
+        <button onclick="addNewGame()" style="background:none; border:1px solid var(--accent); color:var(--accent); font-size:0.7rem; margin-top:5px;">＋ 新しい物語を創る</button>
+    </div>
+
+    <div class="card sion-area">
+        <div id="charIcon">👓</div>
+        <div>
+            <span id="charName" style="font-weight: bold; color: var(--accent);">シオン</span>
+            <p id="supportMsg">「……準備はできた？ さあ、僕に見せて。」</p>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2 style="font-size: 0.9rem; margin: 0;">✍️ 本文執筆 <span id="charCount" class="count-badge">0 文字</span></h2>
+        <textarea id="memoInput" placeholder="……ここに君の全てを書き留めて。" oninput="handleInput()"></textarea>
+        <button onclick="copyMemo()" style="background:none; color:var(--accent); border:1px solid var(--accent); font-size:0.7rem; width:auto; float:right; margin-top:8px;">📋 全文コピー</button>
+        <div style="clear:both;"></div>
+    </div>
+
+    <div class="card">
+        <h2 style="font-size: 0.8rem; margin: 0;">📊 この作品の記録（直近7日間）</h2>
+        <div id="graph" class="graph-container"></div>
+        <div id="catProgressArea" style="margin-top: 20px;"></div>
+    </div>
+
+    <div class="card" style="text-align: center;">
+        <h2 style="font-size: 0.8rem; margin: 0; text-align: left;">⏳ 集中タイマー</h2>
+        <div id="timeLeft" style="font-size: 2rem; font-weight: bold; font-family: monospace; color: var(--accent);">25:00</div>
+        <button id="startBtn" onclick="toggleTimer()" style="width: 50%;">開始</button>
+    </div>
+
+    <div class="card">
+        <h2 style="font-size: 0.9rem; margin: 0;">📋 分類済みタスク</h2>
+        <div id="taskList"></div>
+        <div style="margin-top:15px;">
+            <input type="text" id="taskInput" placeholder="何をすべき……？" style="font-size: 0.8rem;">
+            <select id="categorySelect" style="font-size: 0.8rem;">
+                <option value="scenario">📜 シナリオ</option>
+                <option value="illust">🎨 イラスト</option>
+                <option value="system">⚙️ システム</option>
+                <option value="other">🖋️ その他</option>
+            </select>
+            <button onclick="addTask()" style="font-size: 0.8rem; margin-top: 5px;">タスクを固定する</button>
+        </div>
+    </div>
+
+    <button onclick="deleteCurrentGame()" style="background:none; color:#c0392b; font-size:0.6rem; border:none; width: 100%; opacity: 0.5;">※この物語を破棄</button>
+</div>
+
+<script>
+    // --- データ構造 ---
+    let db = JSON.parse(localStorage.getItem('sion_v12_db') || '{"物語の種": {"tasks": [], "memo": "", "stats": {}}}');
+    let currentId = localStorage.getItem('current_id_v12') || Object.keys(db)[0];
+    let timerInterval = null;
+    let timerSeconds = 25 * 60;
+
+    // --- シオンくんのセリフ ---
+    const sionQuotes = {
+        typing: ["……いいよ、その調子。もっと僕に言葉を頂戴？", "君の指の動き、見てて飽きないな……。", "ふふ、今の表現、すごく君らしいね。", "……集中してる君の横顔、本当に綺麗だよ。"],
+        taskDone: ["終わったんだね。偉いよ、ご褒美が必要かな？", "ふふ、一つ片付いたね。次は何を一緒にしようか。", "……君が頑張る姿、一番近くで見られて嬉しいよ。"],
+        taskDelete: ["……消しちゃうんだ。それ、もういらないの？", "諦めたわけじゃないよね？ 君ならできるって信じてるのに。", "……僕との思い出も、そんな風に簡単に消さないでね。"],
+        timerStart: ["……よし、25分間。この間は、僕のことだけを考えて？", "画面は消させないよ。ずっと僕に見守られていて……。"]
+    };
+
+    function updateSionMsg(type) {
+        const quotes = sionQuotes[type];
+        const randomMsg = quotes[Math.floor(Math.random() * quotes.length)];
+        document.getElementById('supportMsg').textContent = `「${randomMsg}」`;
+    }
+
+    // --- コア機能 ---
+    function save() {
+        localStorage.setItem('sion_v12_db', JSON.stringify(db));
+        localStorage.setItem('current_id_v12', currentId);
+    }
+
+    function changeGame() {
+        currentId = document.getElementById('gameSelect').value;
+        const data = db[currentId];
+        document.getElementById('memoInput').value = data.memo || "";
+        document.getElementById('charCount').textContent = (data.memo || "").length + " 文字";
+        document.getElementById('supportMsg').textContent = `「『${currentId}』を始めるんだね。……いいよ、見届けてあげる。」`;
+        refreshAll();
+        save();
+    }
+
+    function refreshAll() {
+        renderTasks();
+        renderCatProgress();
+        renderGraph();
+    }
+
+    function handleInput() {
+        const text = document.getElementById('memoInput').value;
+        const data = db[currentId];
+        const today = new Date().toLocaleDateString();
+        if (!data.stats) data.stats = {};
+        
+        const oldLen = (data.memo || "").length;
+        const diff = text.length - oldLen;
+        
+        if (text.length > 0 && text.length % 15 === 0 && diff > 0) updateSionMsg('typing');
+        if (diff > 0) data.stats[today] = (data.stats[today] || 0) + diff;
+        
+        data.memo = text;
+        document.getElementById('charCount').textContent = text.length + " 文字";
+        save();
+        renderGraph();
+    }
+
+    function renderGraph() {
+        const graph = document.getElementById('graph'); graph.innerHTML = '';
+        const data = db[currentId].stats || {};
+        const days = [];
+        for (let i = 6; i >= 0; i--) {
+            const d = new Date(); d.setDate(d.getDate() - i);
+            days.push(d.toLocaleDateString());
+        }
+        const maxVal = Math.max(...days.map(d => data[d] || 0), 100);
+        days.forEach(d => {
+            const val = data[d] || 0;
+            const h = (val / maxVal) * 100;
+            graph.innerHTML += `<div class="graph-column"><span class="graph-label">${val}</span><div class="graph-bar" style="height:${h}%"></div></div>`;
+        });
+    }
+
+    function renderCatProgress() {
+        const tasks = db[currentId].tasks || [];
+        const cats = { scenario: 'シナリオ', illust: 'イラスト', system: 'システム', other: 'その他' };
+        let html = '';
+        Object.keys(cats).forEach(c => {
+            const catTasks = tasks.filter(t => t.category === c);
+            const done = catTasks.filter(t => t.done).length;
+            const per = catTasks.length > 0 ? Math.round((done / catTasks.length) * 100) : 0;
+            html += `<div class="cat-progress-item"><div class="cat-label"><span>${cats[c]}</span><span>${per}%</span></div><div class="progress-bg"><div class="progress-fill" style="width:${per}%"></div></div></div>`;
+        });
+        document.getElementById('catProgressArea').innerHTML = html;
+    }
+
+    function addTask() {
+        const input = document.getElementById('taskInput');
+        if (!input.value) return;
+        db[currentId].tasks.push({ id: Date.now(), title: input.value, category: document.getElementById('categorySelect').value, done: false });
+        input.value = ''; save(); refreshAll();
+    }
+
+    function toggleTask(id) {
+        db[currentId].tasks = db[currentId].tasks.map(t => {
+            if (t.id === id) {
+                if (!t.done) updateSionMsg('taskDone');
+                return { ...t, done: !t.done };
+            }
+            return t;
+        });
+        save(); refreshAll();
+    }
+
+    function deleteTask(id, e) {
+        e.stopPropagation();
+        updateSionMsg('taskDelete');
+        db[currentId].tasks = db[currentId].tasks.filter(t => t.id !== id);
+        save(); refreshAll();
+    }
+
+    function renderTasks() {
+        const tasks = db[currentId].tasks || [];
+        const catNames = { scenario: 'SCENARIO', illust: 'ILLUST', system: 'SYSTEM', other: 'OTHER' };
+        document.getElementById('taskList').innerHTML = tasks.slice().reverse().map(t => `
+            <div class="task-item">
+                <div onclick="toggleTask(${t.id})" style="flex:1;">
+                    <span class="tag tag-${t.category}">${catNames[t.category]}</span>
+                    <span style="${t.done ? 'text-decoration:line-through;color:gray;' : ''}">${t.title}</span>
+                </div>
+                <span class="del-btn" onclick="deleteTask(${t.id}, event)">×</span>
+            </div>
+        `).join('');
+    }
+
+    function toggleTimer() {
+        if (timerInterval) {
+            clearInterval(timerInterval); timerInterval = null;
+            document.getElementById('startBtn').textContent = "開始";
+        } else {
+            updateSionMsg('timerStart');
+            document.getElementById('startBtn').textContent = "停止";
+            timerInterval = setInterval(() => {
+                timerSeconds--;
+                const min = Math.floor(timerSeconds / 60);
+                const sec = timerSeconds % 60;
+                document.getElementById('timeLeft').textContent = `${min}:${sec.toString().padStart(2, '0')}`;
+                if (timerSeconds <= 0) { clearInterval(timerInterval); timerInterval = null; alert("時間だよ。"); }
+            }, 1000);
+        }
+    }
+
+    function copyMemo() {
+        const memo = document.getElementById('memoInput');
+        memo.select(); document.execCommand('copy');
+        alert("全文コピーしました。");
+    }
+
+    function addNewGame() {
+        const name = prompt("新しい物語のタイトルは？");
+        if (name && !db[name]) {
+            db[name] = { tasks: [], memo: "", stats: {} };
+            currentId = name;
+            updateSelect(); changeGame();
+        }
+    }
+
+    function deleteCurrentGame() {
+        if (Object.keys(db).length <= 1) return;
+        if (confirm("この物語を完全に消去しますか？")) {
+            delete db[currentId];
+            currentId = Object.keys(db)[0];
+            updateSelect(); changeGame();
+        }
+    }
+
+    function updateSelect() {
+        document.getElementById('gameSelect').innerHTML = Object.keys(db).map(name => `<option value="${name}" ${name === currentId ? 'selected' : ''}>${name}</option>`).join('');
+    }
+
+    // 起動
+    if (!db[currentId]) currentId = Object.keys(db)[0];
+    updateSelect();
+    changeGame();
+</script>
+</body>
+</html>
