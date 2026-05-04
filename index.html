@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sion Master V19: Proximity Focus</title>
+    <title>Sion Master V19.2: Corrected Records</title>
     <style>
         :root { --bg: #f5f2e9; --paper: #fdfaf0; --accent: #5d54a4; --text: #4a453c; --border: #d3cbb8; }
         body { font-family: "Sawarabi Mincho", serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 15px; line-height: 1.5; }
@@ -31,8 +31,8 @@
         textarea#memoInput { background: #fff; border: 1px dashed var(--accent); height: 280px; line-height: 1.8; resize: none; }
         .count-badge { background: var(--accent); color: white; padding: 2px 10px; border-radius: 12px; font-size: 0.8rem; float: right; }
         
-        .task-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px dotted var(--border); font-size: 0.85rem; }
-        .tag { font-size: 0.6rem; padding: 2px 5px; border-radius: 4px; color: white; margin-right: 8px; }
+        .task-item { display: flex; align-items: flex-start; justify-content: space-between; padding: 10px 0; border-bottom: 1px dotted var(--border); font-size: 0.85rem; }
+        .tag { font-size: 0.6rem; padding: 2px 5px; border-radius: 4px; color: white; margin-right: 8px; font-weight: bold; }
         .tag-scenario { background: #a67c52; } .tag-illust { background: #8e9775; } 
         .tag-system { background: #6d8299; } .tag-other { background: #999999; }
     </style>
@@ -51,7 +51,7 @@
         <div class="favor-badge" id="favorRank">執着度：通常</div>
         <div>
             <span style="font-weight: bold; color: var(--accent);">シオン</span>
-            <p id="supportMsg">「……準備はいい？ 僕が君を、一番近くで見守っているよ。」</p>
+            <p id="supportMsg">「……もう、君の計画（日付）は忘れないよ。約束だ。」</p>
         </div>
     </div>
 
@@ -181,7 +181,6 @@
         data.memo = text;
         document.getElementById('charCount').textContent = text.length + " 文字";
         save(); renderCharts();
-        
         const tc = data.stats[today] || 0;
         const icon = document.getElementById('charIcon');
         const rank = document.getElementById('favorRank');
@@ -192,21 +191,28 @@
 
     function addTask() {
         const title = document.getElementById('taskInput').value;
+        const deadline = document.getElementById('deadlineInput').value;
         if (!title) return;
-        db[currentId].tasks.push({ id: Date.now(), title, category: document.getElementById('categorySelect').value, deadline: document.getElementById('deadlineInput').value, done: false });
+        db[currentId].tasks.push({ id: Date.now(), title, category: document.getElementById('categorySelect').value, deadline: deadline, done: false });
         document.getElementById('taskInput').value = '';
+        document.getElementById('deadlineInput').value = '';
         save(); renderTasks(); renderCharts();
     }
 
     function renderTasks() {
-        document.getElementById('taskList').innerHTML = db[currentId].tasks.slice().reverse().map(t => `
-            <div class="task-item">
-                <div onclick="toggleTask(${t.id})" style="flex:1; cursor:pointer; ${t.done?'text-decoration:line-through;color:gray;':''}">
-                    <span class="tag tag-${t.category}">${t.category.toUpperCase()}</span>${t.title}
+        document.getElementById('taskList').innerHTML = db[currentId].tasks.slice().reverse().map(t => {
+            const dateStr = t.deadline ? `<div style="font-size:0.65rem; color:#8e7c52; margin-top:2px;">📅 締切: ${t.deadline}</div>` : '';
+            return `
+                <div class="task-item">
+                    <div onclick="toggleTask(${t.id})" style="flex:1; cursor:pointer; ${t.done?'text-decoration:line-through;color:gray;':''}">
+                        <span class="tag tag-${t.category}">${t.category.toUpperCase()}</span>
+                        <span>${t.title}</span>
+                        ${dateStr}
+                    </div>
+                    <span onclick="deleteTask(${t.id}, event)" style="color:#ccc; cursor:pointer; font-weight:bold; font-size:1.2rem; padding-left:10px;">×</span>
                 </div>
-                <span onclick="deleteTask(${t.id}, event)" style="color:#ccc; cursor:pointer;">×</span>
-            </div>
-        `).join('');
+            `;
+        }).join('');
     }
 
     function toggleTask(id) {
